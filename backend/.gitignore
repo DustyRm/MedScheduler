@@ -1,0 +1,77 @@
+# Compilação
+bin/
+obj/
+
+# Dados de usuário do Visual Studio / VS Code
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Configurações locais
+.vs/
+.vscode/
+.idea/
+
+# Arquivos de build
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Logs
+*.log
+logs/
+
+# Pacotes NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuspec
+
+# Arquivos temporários
+*.tmp
+*.temp
+*.tmp_proj
+*.pid
+*.svclog
+*.scc
+
+# Cache de build
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Testes
+TestResults/
+*.VisualState.xml
+*.coverage
+*.coveragexml
+*.testlog
+nunit-*.xml
+
+# Ferramentas de publicação
+publish/
+app.publish/
+
+# Chaves e certificados
+*.pfx
+*.p12
+*.key
+*.cer
+*.crt
+
+# Ambiente e secrets
+.env
+secrets.json
+appsettings.Development.json
+appsettings.Local.json
+
+# Banco de dados local / Migrations geradas no runtime
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Containers e volumes persistentes
+pgdata/

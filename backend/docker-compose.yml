@@ -1,0 +1,60 @@
+version: "3.9"
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${DB_USER:-postgres}
+  POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+  POSTGRES_DB: ${DB_NAME:-medscheduler}
+
+services:
+  postgres:
+    image: postgres:16
+    environment: *postgres-env
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migration:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+    working_dir: /src/MedScheduler.Api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./:/src
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
+      Jwt__Key: ${JWT_KEY:-SUPER_SECRET_CHANGE_ME}
+    command: >
+      bash -lc "
+        dotnet restore &&
+        dotnet tool install -g dotnet-ef &&
+        export PATH=$PATH:/root/.dotnet/tools &&
+        dotnet ef database update --project MedScheduler.Api.csproj --startup-project MedScheduler.Api.csproj
+      "
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: MedScheduler.Api/Dockerfile
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
+      Jwt__Key: ${JWT_KEY:-SUPER_SECRET_CHANGE_ME}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
