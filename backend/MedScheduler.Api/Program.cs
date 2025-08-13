@@ -9,7 +9,10 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+{
+    var cs = builder.Configuration.GetConnectionString("Postgres");
+    opt.UseNpgsql(cs, x => x.MigrationsAssembly("MedScheduler.Api"));
+});
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
@@ -19,6 +22,7 @@ builder.Services.AddControllers();
 var issuer = builder.Configuration["Jwt:Issuer"];
 var audience = builder.Configuration["Jwt:Audience"];
 var key = builder.Configuration["Jwt:Key"] ?? "SUPER_SECRET_CHANGE_ME";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -40,6 +44,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "MedScheduler API", Version = "v1" });
+
     var jwtScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -50,15 +55,11 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Insira o token JWT no campo. Ex: Bearer {token}"
     };
     c.AddSecurityDefinition("Bearer", jwtScheme);
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { jwtScheme, new List<string>() }
-    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtScheme, new List<string>() } });
 });
 
 var app = builder.Build();
 
-// Migrate on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -74,7 +75,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

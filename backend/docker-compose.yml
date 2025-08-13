@@ -31,20 +31,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
-      Jwt__Key: ${JWT_KEY:-SUPER_SECRET_CHANGE_ME}
-    command: >
-      bash -lc "
-        dotnet restore &&
-        dotnet tool install -g dotnet-ef &&
-        export PATH=$PATH:/root/.dotnet/tools &&
-        dotnet ef database update --project MedScheduler.Api.csproj --startup-project MedScheduler.Api.csproj
-      "
+      Jwt__Key: ${JWT_KEY:-DEV_SUPER_SECRET_CHANGE_ME_32BYTES_MINIMUM_1234567890}
+    command: ["bash","-lc","dotnet restore && dotnet tool restore && dotnet ef database update --project ./MedScheduler.Api.csproj --startup-project ./MedScheduler.Api.csproj"]
     restart: "no"
 
   api:
     build:
-      context: .
-      dockerfile: MedScheduler.Api/Dockerfile
+      context: ./MedScheduler.Api   
+      dockerfile: Dockerfile
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -52,9 +46,13 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
       Jwt__Key: ${JWT_KEY:-SUPER_SECRET_CHANGE_ME}
+    entrypoint: ["dotnet","MedScheduler.Api.dll"]
     ports:
       - "${API_PORT:-8080}:8080"
+    volumes:
+      - aspnet_keys:/root/.aspnet/DataProtection-Keys
     restart: unless-stopped
 
 volumes:
   pgdata:
+  aspnet_keys:

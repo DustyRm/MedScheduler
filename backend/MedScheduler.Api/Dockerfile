@@ -1,11 +1,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY MedScheduler.Api/*.csproj ./MedScheduler.Api/
-RUN dotnet restore ./MedScheduler.Api/MedScheduler.Api.csproj
+COPY MedScheduler.Api.csproj ./
+RUN dotnet restore
 
-COPY MedScheduler.Api/. ./MedScheduler.Api/
-RUN dotnet publish ./MedScheduler.Api/MedScheduler.Api.csproj -c Release -o /app
+COPY . .
+RUN dotnet publish -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
