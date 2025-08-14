@@ -2,6 +2,7 @@ using MedScheduler.Api.Application.DTOs;
 using MedScheduler.Api.Application.Factories.Auth;
 using MedScheduler.Api.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 
 namespace MedScheduler.Api.Presentation.Controllers;
 
@@ -10,10 +11,11 @@ namespace MedScheduler.Api.Presentation.Controllers;
 public class AuthController(IUserRepository users, IConfiguration cfg) : ControllerBase
 {
     [HttpPost("register")]
-    public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest req)
+    public async Task<ActionResult<RegisterResponse>> Register([FromBody] RegisterRequest req)
     {
         var strategy = AuthFactory.Create(users, cfg);
-        return Ok(await strategy.RegisterAsync(req));
+        var result = await strategy.RegisterAsync(req);
+        return Created($"/users/{result.Id}", result);
     }
 
     [HttpPost("login")]

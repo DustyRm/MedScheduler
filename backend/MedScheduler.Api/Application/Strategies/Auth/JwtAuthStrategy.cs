@@ -12,7 +12,7 @@ namespace MedScheduler.Api.Application.Strategies.Auth;
 
 public class JwtAuthStrategy(IUserRepository users, IConfiguration cfg) : IAuthStrategy
 {
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+    public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
     {
         var existing = await users.GetByEmailAsync(request.Email);
         if (existing is not null) throw new Exception("E-mail já registrado.");
@@ -28,7 +28,7 @@ public class JwtAuthStrategy(IUserRepository users, IConfiguration cfg) : IAuthS
         await users.AddAsync(user);
         await users.SaveAsync();
 
-        return GenerateToken(user);
+        return new RegisterResponse(user.Id, user.Name, user.Email, user.Role);
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request)
@@ -42,9 +42,17 @@ public class JwtAuthStrategy(IUserRepository users, IConfiguration cfg) : IAuthS
 
     private AuthResponse GenerateToken(User u)
     {
-        var issuer = cfg["Jwt:Issuer"]!;
-        var audience = cfg["Jwt:Audience"]!;
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(cfg["Jwt:Key"]!));
+        var issuer   = cfg["Jwt:Issuer"];
+        var audience = cfg["Jwt:Audience"];
+        var keyCfg   = cfg["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key ausente");
+
+        byte[] keyBytes;
+        try { keyBytes = Convert.FromBase64String(keyCfg); }
+        catch { keyBytes = Encoding.UTF8.GetBytes(keyCfg); }
+        if (keyBytes.Length < 32)
+            throw new InvalidOperationException("Jwt:Key precisa ter pelo menos 32 bytes (HS256).");
+
+        var signingKey = new SymmetricSecurityKey(keyBytes);
 
         var claims = new[]
         {
@@ -54,10 +62,11 @@ public class JwtAuthStrategy(IUserRepository users, IConfiguration cfg) : IAuthS
             new Claim("name", u.Name)
         };
 
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(issuer, audience, claims, expires: DateTime.UtcNow.AddHours(8), signingCredentials: creds);
-        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+        var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
+        var token = new JwtSecurityToken(issuer, audience, claims,
+            expires: DateTime.UtcNow.AddHours(8), signingCredentials: creds);
 
+        var jwt = new JwtSecurityTokenHandler().WriteToken(token);
         return new AuthResponse(jwt, u.Name, u.Email, u.Role);
     }
 }

@@ -4,6 +4,6 @@ namespace MedScheduler.Api.Application.Interfaces.Auth;
 
 public interface IAuthStrategy
 {
-    Task<AuthResponse> LoginAsync(LoginRequest request);
-    Task<AuthResponse> RegisterAsync(RegisterRequest request);
+    Task<RegisterResponse> RegisterAsync(RegisterRequest request);
+    Task<AuthResponse> LoginAsync(LoginRequest request);           
 }
