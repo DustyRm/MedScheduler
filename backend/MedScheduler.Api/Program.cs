@@ -21,6 +21,22 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddControllers();
 
+// ===== CORS =====
+const string CorsPolicy = "MedSchedulerCors";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "https://localhost:3000"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // ===== JWT / Auth =====
 var issuer   = builder.Configuration["Jwt:Issuer"];
 var audience = builder.Configuration["Jwt:Audience"];
@@ -87,7 +103,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// ===== Swagger =====
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -139,6 +154,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseCors(CorsPolicy);
+
 app.UseAuthentication();
 
 app.Use(async (ctx, next) =>
@@ -148,7 +165,6 @@ app.Use(async (ctx, next) =>
     Console.WriteLine($"[PIPE] {ctx.Request.Method} {ctx.Request.Path} user={sub} roles=[{roles}]");
     await next();
 });
-// ====================================================================
 
 app.UseAuthorization();
 app.MapControllers();

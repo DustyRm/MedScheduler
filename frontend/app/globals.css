@@ -1,0 +1,11 @@
+:root { --bg: #0f1419; --fg: #e8e8e8; --acc: #1e90ff; }
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+.container{max-width:1024px;margin:0 auto;padding:24px}
+.card{background:#121821;border:1px solid #1f2937;border-radius:16px;padding:20px;margin:16px 0}
+.row{display:flex;gap:12px;align-items:center}
+.input{width:100%;padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#e8e8e8}
+.button{padding:10px 16px;border-radius:10px;border:1px solid #334155;background:var(--acc);color:white;cursor:pointer}
+.link{color:#9bd}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #1f2937;padding:8px;text-align:left}
+.badge{padding:2px 8px;border-radius:999px;background:#1f2937}

@@ -74,3 +74,12 @@ appsettings.Local.json
 
 # Containers e volumes persistentes
 pgdata/
+
+# Node
+node_modules/
+
+# Next.js
+**/.next/
+**/out/
+**/.vercel/
+**/.turbo/
