@@ -37,22 +37,31 @@ services:
 
   api:
     build:
-      context: ./MedScheduler.Api   
+      context: ./MedScheduler.Api
       dockerfile: Dockerfile
+      target: dev            
+    working_dir: /src/MedScheduler.Api
     depends_on:
       migration:
         condition: service_completed_successfully
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
-      Jwt__Key: ${JWT_KEY:-SUPER_SECRET_CHANGE_ME}
-    entrypoint: ["dotnet","MedScheduler.Api.dll"]
+      Jwt__Issuer: ${JWT_ISSUER:-medscheduler}
+      Jwt__Audience: ${JWT_AUDIENCE:-medscheduler-clients}
+      Jwt__Key: ${JWT_KEY:-DEV_SUPER_SECRET_CHANGE_ME_32BYTES_MINIMUM_1234567890}
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
     ports:
       - "${API_PORT:-8080}:8080"
     volumes:
+      - ./MedScheduler.Api:/src/MedScheduler.Api       
       - aspnet_keys:/root/.aspnet/DataProtection-Keys
+      - nuget:/root/.nuget/packages                      
     restart: unless-stopped
 
 volumes:
   pgdata:
   aspnet_keys:
+  nuget:

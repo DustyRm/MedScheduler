@@ -58,6 +58,7 @@ public class JwtAuthStrategy(IUserRepository users, IConfiguration cfg) : IAuthS
         {
             new Claim(JwtRegisteredClaimNames.Sub, u.Id.ToString()),
             new Claim(ClaimTypes.Role, u.Role.ToString()),
+            new Claim("role", u.Role.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, u.Email),
             new Claim("name", u.Name)
         };

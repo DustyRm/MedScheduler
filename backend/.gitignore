@@ -62,7 +62,6 @@ app.publish/
 *.crt
 
 # Ambiente e secrets
-.env
 secrets.json
 appsettings.Development.json
 appsettings.Local.json
