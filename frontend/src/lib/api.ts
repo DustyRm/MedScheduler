@@ -53,14 +53,17 @@ async function http<T>(path: string, options?: RequestInit): Promise<T | undefin
       }
     }
 
-
     if (res.status === 401) msg = 'Credenciais inválidas.';
     if (res.status === 403) msg = 'Acesso negado.';
+
+    if (rawText && /23503|foreign key constraint|DoctorId/i.test(rawText)) {
+      msg = 'Médico inválido: o DoctorId informado não existe.';
+    }
 
     if (rawText && /^System\./i.test(rawText)) {
       const firstLine = rawText.split('\n')[0];
       const afterColon = firstLine.split(':').slice(1).join(':').trim();
-      if (afterColon) msg = afterColon; 
+      if (afterColon) msg = afterColon;
     }
 
     throw new HttpError(res.status, msg, parsed);
@@ -94,9 +97,10 @@ function toDateISO(d: Date) {
 }
 
 type CreateAppointmentInput = {
-  date: string;
-  time: string;
+  date: string;       
+  time: string;        
   symptoms: string;
+  doctorId: string;
   description?: string;
 };
 
@@ -119,9 +123,9 @@ export const api = {
     return normalizeAuth(raw);
   },
 
-  // PACIENTE
-  createAppointment: (token: string, payload: CreateAppointmentInput) =>
-    http<Appointment>('/paciente/agendamentos', {
+  createAppointment: (token: string, payload: CreateAppointmentInput) => {
+    const isoCombined = `${payload.date}T${payload.time}:00`; 
+    return http<Appointment>('/paciente/agendamentos', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -129,12 +133,20 @@ export const api = {
         time: payload.time,
         description: payload.description,
         symptoms: payload.symptoms,
+        doctorId: payload.doctorId,
         data: payload.date,
         hora: payload.time,
         descricao: payload.description,
         Symptoms: payload.symptoms,
+        DoctorId: payload.doctorId,
+        Date: payload.date,
+        Time: payload.time,
+        dataHora: isoCombined,
+        dateTime: isoCombined,
+        scheduledAt: isoCombined,
       }),
-    }),
+    });
+  },
 
   listMyAppointments: async (token: string) => {
     try {
@@ -149,12 +161,24 @@ export const api = {
     }
   },
 
-  // MÉDICO
   listDoctorAppointmentsByDate: async (token: string, date?: string) => {
     const day = date || toDateISO(new Date());
     try {
       return (
         (await http<any[]>(`/medico/agendamentos?data=${encodeURIComponent(day)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })) || []
+      );
+    } catch (e: any) {
+      if (e?.status === 404) return [];
+      throw e;
+    }
+  },
+
+  listDoctors: async (token: string) => {
+    try {
+      return (
+        (await http<User[]>('/medicos', {
           headers: { Authorization: `Bearer ${token}` },
         })) || []
       );
