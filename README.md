@@ -92,3 +92,4 @@ Medico   = 2
 - **JWT_KEY** precisa ter **>= 32 bytes**.
 - Para usar **OpenAI**, defina `TRIAGEM_PROVIDER=openai` e `OPENAI_API_KEY` no `.env`.
 - Em dev, a API roda com **dotnet watch** dentro do container (hot reload).
+- Caso fique vermelho os imports do react provavelmente seria por conta do editor de codigo nao conseguir entrar dentro do container ja que esta baixando o node modules dentro dele
