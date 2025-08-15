@@ -12,11 +12,11 @@ export default function PacienteDashboard() {
   const router = useRouter();
   const { user, token, logout } = useAuth();
   const { data, loading, error, refetch } = useMyAppointments(token);
-  const { list: doctors } = useDoctors(token);
+  const { list: doctors } = useDoctors(token); 
 
   useEffect(() => {
     if (!user) router.replace('/login');
-    else if (user.role !== 1) router.replace('/medico'); // 1 = Paciente
+    else if (user.role !== 1) router.replace('/medico'); 
   }, [user, router]);
 
   const handleLogout = () => { logout(); router.replace('/login'); };
@@ -41,7 +41,12 @@ export default function PacienteDashboard() {
         <h2>Meus agendamentos</h2>
         {loading && <p>Carregando...</p>}
         {error && <p style={{ color: 'salmon' }}>{error}</p>}
-        {data && <AppointmentList items={data} doctors={doctors} />}
+        {!loading && !error && (!data || data.length === 0) && (
+          <p style={{ opacity: 0.8 }}>Você ainda não tem agendamentos.</p>
+        )}
+        {data && data.length > 0 && (
+          <AppointmentList items={data} doctors={doctors} />
+        )}
       </div>
     </div>
   );

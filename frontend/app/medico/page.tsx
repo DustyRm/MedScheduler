@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useDoctorAppointments } from '@/hooks/useAppointments';
@@ -45,7 +46,10 @@ export default function MedicoDashboard() {
       </div>
 
       <div className="card">
-        <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div
+          className="row"
+          style={{ justifyContent: 'space-between', gap: 12, marginBottom: 16 }}
+        >
           <label className="row" style={{ gap: 8 }}>
             <span>Data:</span>
             <input
@@ -53,13 +57,25 @@ export default function MedicoDashboard() {
               type="date"
               value={dateISO}
               onChange={(e) => setDateISO(e.target.value)}
+              aria-label="Selecionar data da agenda"
             />
           </label>
         </div>
 
         {loading && <p>Carregando...</p>}
         {error && <p style={{ color: 'salmon' }}>{error}</p>}
-        {data && <AppointmentList items={data} showPatient />}
+        {!loading && !error && (!data || data.length === 0) && (
+          <p style={{ opacity: 0.8, marginTop: 12 }}>Nenhum agendamento para esta data.</p>
+        )}
+
+        {data && data.length > 0 && (
+          <AppointmentList
+            items={data}
+            showPatient
+            hideDoctorColumn
+            doctorNameOverride={user.name}
+          />
+        )}
       </div>
     </div>
   );

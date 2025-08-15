@@ -22,9 +22,9 @@ function pickDate(r: Row) {
 
 function pickTime(r: Row) {
   const t = r.time ?? r.hora ?? r.Time ?? r.Hora ?? null;
-  if (typeof t === 'string' && t.includes(':')) return t.slice(0,5);
+  if (typeof t === 'string' && t.includes(':')) return t.slice(0, 5);
   const combo = r.dataHora ?? r.dateTime ?? r.scheduledAt ?? null;
-  if (!isBadDate(combo)) return new Date(combo).toTimeString().slice(0,5);
+  if (!isBadDate(combo)) return new Date(combo).toTimeString().slice(0, 5);
   return null;
 }
 
@@ -32,30 +32,48 @@ function pickDesc(r: Row) {
   return r.description ?? r.descricao ?? r.Symptoms ?? r.symptoms ?? '-';
 }
 
-function pickDoctorName(r: Row, map?: Record<string, User>) {
+function pickPatientName(r: Row) {
   const direct =
-    r.doctorName ?? r.medicoNome ?? r.medico?.name ?? r.doctor?.name ??
-    r.MedicoNome ?? r.Medico?.Name ?? r.Doctor?.Name;
+    r.patientName ?? r.pacienteNome ?? r.paciente?.name ?? r.patient?.name ??
+    r.Paciente?.Name ?? r.Patient?.Name;
   if (direct) return direct;
 
-  const id = r.doctorId ?? r.DoctorId ?? r.medicoId ?? r.MedicoId ?? r.Doctor?.Id ?? r.Medico?.Id;
-  if (id && map && map[id]?.name) return map[id].name;
+  const id =
+    r.patientId ?? r.PacienteId ?? r.PatientId ??
+    r.pacienteId ?? r.Patient?.Id ?? r.Paciente?.Id;
 
-  return id || '-';
+  return id ? `Paciente ${String(id)}` : '-';
 }
 
-function pickPatientName(r: Row) {
-  return r.patientName ?? r.pacienteNome ?? r.paciente?.name ?? r.patient?.name ?? '-';
+function pickDoctorName(r: Row, map?: Record<string, User>, override?: string) {
+  if (override) return override;
+
+  const direct =
+    r.doctorName ?? r.medicoNome ?? r.medico?.name ?? r.doctor?.name ??
+    r.Medico?.Name ?? r.Doctor?.Name;
+  if (direct) return direct;
+
+  const id =
+    r.doctorId ?? r.DoctorId ?? r.medicoId ?? r.MedicoId ??
+    r.Doctor?.Id ?? r.Medico?.Id;
+
+  if (id && map && map[id]?.name) return map[id].name;
+
+  return '-';
 }
 
 export function AppointmentList({
   items,
   doctors,
   showPatient = false,
+  hideDoctorColumn = false,
+  doctorNameOverride,
 }: {
   items: Row[];
   doctors?: User[];
   showPatient?: boolean;
+  hideDoctorColumn?: boolean;
+  doctorNameOverride?: string;
 }) {
   const map = doctors ? Object.fromEntries(doctors.map(d => [d.id, d] as const)) : undefined;
 
@@ -71,24 +89,25 @@ export function AppointmentList({
           <th>Hora</th>
           <th>Descrição</th>
           {showPatient && <th>Paciente</th>}
-          <th>Médico</th>
+          {!hideDoctorColumn && <th>Médico</th>}
         </tr>
       </thead>
       <tbody>
         {items.map((a, idx) => {
           const d = pickDate(a);
-          const dateStr = d ? d.toLocaleDateString() : '-';
+          const dateStr = d ? d.toLocaleDateString('pt-BR') : '-';
           const timeStr = pickTime(a) || '-';
           const descStr = pickDesc(a);
-          const docStr = pickDoctorName(a, map);
-          const patStr = pickPatientName(a);
+          const patStr = showPatient ? pickPatientName(a) : undefined;
+          const docStr = hideDoctorColumn ? undefined : pickDoctorName(a, map, doctorNameOverride);
+
           return (
             <tr key={a.id ?? idx}>
               <td>{dateStr}</td>
               <td>{timeStr}</td>
               <td>{descStr}</td>
               {showPatient && <td>{patStr}</td>}
-              <td>{docStr}</td>
+              {!hideDoctorColumn && <td>{docStr}</td>}
             </tr>
           );
         })}
