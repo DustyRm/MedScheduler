@@ -10,7 +10,7 @@ export class HttpError extends Error {
   }
 }
 
-const RAW_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+const RAW_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const BASE = RAW_BASE.endsWith('/') ? RAW_BASE.slice(0, -1) : RAW_BASE;
 
 async function http<T>(path: string, options?: RequestInit): Promise<T | undefined> {
