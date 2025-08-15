@@ -10,7 +10,7 @@ API de agendamento médico com **.NET 8 + EF Core + PostgreSQL + JWT**. Inclui c
 - **Next.js 14**
 - **React 18**
 - **TypeScript 5**
-- **ESLint** (config Next)
+- **ESLint** (config Next)  
 > A URL da API é lida de `NEXT_PUBLIC_API_URL` (padrão: `http://api:8080`).
 
 ## Como rodar (Docker)
@@ -64,7 +64,6 @@ NEXT_PUBLIC_API_URL=http://api:8080
 ### Auth
 - `POST /auth/register` → cria usuário (não retorna token)
 - `POST /auth/login` → retorna `{ token, name, email, role }`  
-
 No Swagger, clique **Authorize** e informe: `Bearer <seu_token>`.
 
 ## Roles (Papéis)
@@ -88,8 +87,39 @@ Medico   = 2
 - `POST /mock/triagem` → triagem **mock** (palavras‑chave)
 - `POST /triagem` → usa **estratégia ativa** (`TRIAGEM_PROVIDER=openai` usa OpenAI; senão mock)
 
+## Testes unitários
+
+Os testes ficam em **`backend/MedScheduler.Tests`** (xUnit + FluentAssertions + Moq + EF InMemory).
+
+### Rodar testes (host)
+```bash
+dotnet test backend/MedScheduler.Tests/MedScheduler.Tests.csproj
+```
+
+### Rodar teste específico
+```bash
+dotnet test backend/MedScheduler.Tests/MedScheduler.Tests.csproj --filter FullyQualifiedName~JwtAuthStrategyTests
+```
+
+### Cobertura (opcional, via collector nativo)
+```bash
+dotnet test backend/MedScheduler.Tests/MedScheduler.Tests.csproj --collect:"XPlat Code Coverage"
+# relatório gerado em: backend/MedScheduler.Tests/TestResults/<GUID>/coverage.cobertura.xml
+```
+Se quiser HTML, instale o reportgenerator:
+```bash
+dotnet tool install -g dotnet-reportgenerator-globaltool
+reportgenerator -reports:backend/MedScheduler.Tests/TestResults/**/coverage.cobertura.xml -targetdir:coverage
+# abre coverage/index.html
+```
+
+### Observações dos testes
+- **JWT**: os testes usam uma chave de no mínimo **32 bytes** (não-base64) para evitar falha de tamanho mínimo.
+- **EF InMemory**: os testes criam bancos em memória por método; campos obrigatórios (ex.: `Symptoms`) são preenchidos nos objetos de teste.
+- Se aparecer aviso de versões do EF, alinhe as versões (recomendado tudo em **8.0.8** ou tudo em **8.0.4**).
+
 ## Observações rápidas
 - **JWT_KEY** precisa ter **>= 32 bytes**.
 - Para usar **OpenAI**, defina `TRIAGEM_PROVIDER=openai` e `OPENAI_API_KEY` no `.env`.
 - Em dev, a API roda com **dotnet watch** dentro do container (hot reload).
-- Caso fique vermelho os imports do react provavelmente seria por conta do editor de codigo nao conseguir entrar dentro do container ja que esta baixando o node modules dentro dele
+- Caso fique vermelho os imports do React, provavelmente é o editor não enxergando o `node_modules` porque ele está dentro do container. 
