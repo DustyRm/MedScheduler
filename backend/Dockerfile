@@ -8,11 +8,13 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY MedScheduler.Api.csproj ./
-RUN dotnet restore
+# restaura com cache
+COPY MedScheduler.Api/MedScheduler.Api.csproj MedScheduler.Api/
+RUN dotnet restore MedScheduler.Api/MedScheduler.Api.csproj
 
+# copia o resto e publica
 COPY . .
-RUN dotnet publish -c Release -o /out
+RUN dotnet publish MedScheduler.Api/MedScheduler.Api.csproj -c Release -o /out
 
 # ========= FINAL (PROD) =========
 FROM runtime AS production
@@ -25,6 +27,9 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS dev
 WORKDIR /src/MedScheduler.Api
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
+
+# melhora detecção de mudanças em bind-mount
 ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 ENV DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1
+
 CMD ["bash","-lc","dotnet tool restore && dotnet watch run"]

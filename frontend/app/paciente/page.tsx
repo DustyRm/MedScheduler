@@ -1,25 +1,29 @@
+'use client';
+
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useMyAppointments } from '@/hooks/useAppointments';
-import { useDoctors } from '@/hooks/useDoctors';      // <—
+import { useDoctors } from '@/hooks/useDoctors';
 import { AppointmentForm } from '@/ui/AppointmentForm';
 import { AppointmentList } from '@/ui/AppointmentList';
 import { useRouter } from 'next/navigation';
 
 export default function PacienteDashboard() {
-  const { user, token, logout } = useAuth();
   const router = useRouter();
+  const { user, token, logout } = useAuth();
   const { data, loading, error, refetch } = useMyAppointments(token);
-  const { list: doctors } = useDoctors(token);        // <—
+  const { list: doctors } = useDoctors(token);
 
   useEffect(() => {
-    if (!user) { router.replace('/login'); return; }
-    if (user.role !== 1) router.replace('/medico');
+    if (!user) router.replace('/login');
+    else if (user.role !== 1) router.replace('/medico'); // 1 = Paciente
   }, [user, router]);
 
-  if (!user || user.role !== 1) return null;
-
   const handleLogout = () => { logout(); router.replace('/login'); };
+
+  if (!user || user.role !== 1) {
+    return <div className="container"><div className="card">Redirecionando...</div></div>;
+  }
 
   return (
     <div className="container">
@@ -37,7 +41,7 @@ export default function PacienteDashboard() {
         <h2>Meus agendamentos</h2>
         {loading && <p>Carregando...</p>}
         {error && <p style={{ color: 'salmon' }}>{error}</p>}
-        {data && <AppointmentList items={data} doctors={doctors} />} {/* <— passa médicos */}
+        {data && <AppointmentList items={data} doctors={doctors} />}
       </div>
     </div>
   );

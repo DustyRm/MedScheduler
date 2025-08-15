@@ -27,19 +27,21 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./:/src
+      - ./backend:/src
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
       Jwt__Key: ${JWT_KEY:-DEV_SUPER_SECRET_CHANGE_ME_32BYTES_MINIMUM_1234567890}
-    command: ["bash","-lc","dotnet restore && dotnet tool restore && dotnet ef database update --project ./MedScheduler.Api.csproj --startup-project ./MedScheduler.Api.csproj"]
+      Jwt__Issuer: ${JWT_ISSUER:-medscheduler}
+      Jwt__Audience: ${JWT_AUDIENCE:-medscheduler-clients}
+    command: ["bash","-lc","set -e; dotnet restore; dotnet tool restore; dotnet ef database update --project ./MedScheduler.Api.csproj --startup-project ./MedScheduler.Api.csproj"]
     restart: "no"
 
   api:
     build:
-      context: ./MedScheduler.Api
+      context: ./backend
       dockerfile: Dockerfile
-      target: dev            
+      target: dev                      
     working_dir: /src/MedScheduler.Api
     depends_on:
       migration:
@@ -48,20 +50,40 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=${DB_NAME:-medscheduler};Username=${DB_USER:-postgres};Password=${DB_PASS:-postgres}"
+      Jwt__Key: ${JWT_KEY:-DEV_SUPER_SECRET_CHANGE_ME_32BYTES_MINIMUM_1234567890}
       Jwt__Issuer: ${JWT_ISSUER:-medscheduler}
       Jwt__Audience: ${JWT_AUDIENCE:-medscheduler-clients}
-      Jwt__Key: ${JWT_KEY:-DEV_SUPER_SECRET_CHANGE_ME_32BYTES_MINIMUM_1234567890}
       DOTNET_USE_POLLING_FILE_WATCHER: "1"
       DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
     ports:
       - "${API_PORT:-8080}:8080"
     volumes:
-      - ./MedScheduler.Api:/src/MedScheduler.Api       
+      - ./backend/MedScheduler.Api:/src/MedScheduler.Api
       - aspnet_keys:/root/.aspnet/DataProtection-Keys
-      - nuget:/root/.nuget/packages                      
+      - nuget:/root/.nuget/packages
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev                      
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:8080}
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
     restart: unless-stopped
 
 volumes:
   pgdata:
   aspnet_keys:
   nuget:
+  node_modules:

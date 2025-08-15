@@ -1,46 +1,85 @@
-// src/hooks/useAppointments.ts
-'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import type { Appointment } from '@/types';
 
 export function useMyAppointments(token: string | null) {
-  const [data, setData] = useState<any[] | null>(null);
+  const [data, setData] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetcher() {
-    if (!token) return;
+  const fetcher = useCallback(async () => {
+    if (!token) { setData([]); return; }
     setLoading(true);
     setError(null);
     try {
       const list = await api.listMyAppointments(token);
-      setData(list);
+      setData(Array.isArray(list) ? list as Appointment[] : []);
     } catch (e: any) {
       setError(e?.message || 'Erro ao listar agendamentos');
       setData([]);
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
 
-  useEffect(() => { fetcher(); }, [token]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!token) { setData([]); return; }
+      setLoading(true);
+      setError(null);
+      try {
+        const list = await api.listMyAppointments(token);
+        if (alive) setData(Array.isArray(list) ? list as Appointment[] : []);
+      } catch (e: any) {
+        if (alive) { setError(e?.message || 'Erro ao listar agendamentos'); setData([]); }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [token]);
+
   return { data, loading, error, refetch: fetcher };
 }
 
 export function useDoctorAppointments(token: string | null, dateISO?: string) {
-  const [data, setData] = useState<any[] | null>(null);
+  const [data, setData] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
+  const fetcher = useCallback(async () => {
+    if (!token) { setData([]); return; }
     setLoading(true);
     setError(null);
-    api.listDoctorAppointmentsByDate(token, dateISO)
-      .then(setData)
-      .catch((e) => { setError(e?.message || 'Erro ao listar agenda'); setData([]); })
-      .finally(() => setLoading(false));
+    try {
+      const list = await api.listDoctorAppointmentsByDate(token, dateISO);
+      setData(Array.isArray(list) ? list as Appointment[] : []);
+    } catch (e: any) {
+      setError(e?.message || 'Erro ao listar agenda');
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
   }, [token, dateISO]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (!token) { setData([]); return; }
+      setLoading(true);
+      setError(null);
+      try {
+        const list = await api.listDoctorAppointmentsByDate(token, dateISO);
+        if (alive) setData(Array.isArray(list) ? list as Appointment[] : []);
+      } catch (e: any) {
+        if (alive) { setError(e?.message || 'Erro ao listar agenda'); setData([]); }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [token, dateISO]);
+
+  return { data, loading, error, refetch: fetcher };
 }
