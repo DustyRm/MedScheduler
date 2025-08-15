@@ -64,7 +64,7 @@ No Swagger, clique **Authorize** e informe: `Bearer <seu_token>`.
 
 ## Roles(Papeis)
 
-<!-- Deixei numerico para ficar mais facil na hora de colocar no swagger -->
+Deixei numerico para ficar mais facil na hora de colocar no swagger
 
 Paciente = 1,
 Medico = 2
