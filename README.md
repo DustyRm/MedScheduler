@@ -3,20 +3,25 @@
 API de agendamento médico com **.NET 8 + EF Core + PostgreSQL + JWT**. Inclui container de **migrations** e **triagem** de especialidade (mock por palavras‑chave ou **OpenAI**, opcional).
 
 ## Stack
-- ASP.NET Core 8 (Web API)
-- Entity Framework Core + Npgsql (PostgreSQL)
-- JWT (roles: Paciente, Medico)
-- Docker Compose (postgres, migration, api, web opcional)
+- **Backend**: ASP.NET Core 8 (Web API), Entity Framework Core + Npgsql (PostgreSQL), JWT (roles: Paciente, Medico)
+- **Infra**: Docker Compose (postgres, migration, api, web opcional)
+
+## Frontend (Tecnologias)
+- **Next.js 14**
+- **React 18**
+- **TypeScript 5**
+- **ESLint** (config Next)
+> A URL da API é lida de `NEXT_PUBLIC_API_URL` (padrão: `http://api:8080`).
 
 ## Como rodar (Docker)
-1) Crie um arquivo **.env** na raiz (ja existe mas caso nao tenha).
-2) Suba tudo(Abra o docker desktop):
+1) Crie um arquivo **.env** na raiz (já existe no projeto; ajuste se necessário).
+2) Suba tudo (com Docker Desktop aberto):
 ```bash
 docker compose up --build
 ```
 3) API: **http://localhost:8080**  
    Swagger: **http://localhost:8080/swagger**  
-   (Frontend, se usar): **http://localhost:3000**
+   Frontend (se usar): **http://localhost:3000**
 
 ### Parar/limpar
 ```bash
@@ -27,7 +32,7 @@ docker compose down
 docker compose down --volumes --remove-orphans
 ```
 
-## .env (exemplo mínimo, por padrao deixei ja no projeto)
+## .env (exemplo mínimo, por padrão já no projeto)
 ```env
 # portas
 API_PORT=8080
@@ -62,12 +67,12 @@ NEXT_PUBLIC_API_URL=http://api:8080
 
 No Swagger, clique **Authorize** e informe: `Bearer <seu_token>`.
 
-## Roles(Papeis)
-
-Deixei numerico para ficar mais facil na hora de colocar no swagger
-
-Paciente = 1,
-Medico = 2
+## Roles (Papéis)
+Numérico para facilitar testes no Swagger:
+```
+Paciente = 1
+Medico   = 2
+```
 
 ### Paciente
 - `POST /paciente/agendamentos` → cria agendamento (salva `RecommendedSpecialty`)
@@ -77,7 +82,7 @@ Medico = 2
 - `GET /medico/agendamentos?data=YYYY-MM-DD` → agenda do médico no dia
 
 ### Médicos
-- `GET /medicos` → lista todos com `role=Medico`
+- `GET /medicos` → lista todos com `role= Medico || 2`
 
 ### Triagem
 - `POST /mock/triagem` → triagem **mock** (palavras‑chave)
@@ -87,5 +92,3 @@ Medico = 2
 - **JWT_KEY** precisa ter **>= 32 bytes**.
 - Para usar **OpenAI**, defina `TRIAGEM_PROVIDER=openai` e `OPENAI_API_KEY` no `.env`.
 - Em dev, a API roda com **dotnet watch** dentro do container (hot reload).
-
-
