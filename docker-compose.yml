@@ -41,7 +41,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: dev                      
+      target: dev
     working_dir: /src/MedScheduler.Api
     depends_on:
       migration:
@@ -55,6 +55,8 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE:-medscheduler-clients}
       DOTNET_USE_POLLING_FILE_WATCHER: "1"
       DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}              
+      Triagem__Provider: ${TRIAGEM_PROVIDER:-openai} 
     ports:
       - "${API_PORT:-8080}:8080"
     volumes:
@@ -67,7 +69,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: dev                      
+      target: dev
     depends_on:
       api:
         condition: service_started

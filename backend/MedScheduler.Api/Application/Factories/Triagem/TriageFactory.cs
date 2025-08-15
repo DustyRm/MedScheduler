@@ -9,9 +9,14 @@ public static class TriageFactory
     public static ITriageStrategy Create(IConfiguration cfg)
     {
         var provider = cfg["Triagem:Provider"]?.ToLowerInvariant() ?? "keyword";
+
         return provider switch
         {
-            "openai" => new OpenAITriageStrategy(),
+            "openai" => new OpenAITriageStrategy(
+                http: new HttpClient(),
+                apiKey: cfg["OPENAI_API_KEY"] ?? throw new InvalidOperationException("OPENAI_API_KEY ausente")
+            ),
+
             _ => new KeywordTriageStrategy()
         };
     }
