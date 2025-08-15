@@ -122,4 +122,4 @@ reportgenerator -reports:backend/MedScheduler.Tests/TestResults/**/coverage.cobe
 - **JWT_KEY** precisa ter **>= 32 bytes**.
 - Para usar **OpenAI**, defina `TRIAGEM_PROVIDER=openai` e `OPENAI_API_KEY` no `.env`.
 - Em dev, a API roda com **dotnet watch** dentro do container (hot reload).
-- Caso fique vermelho os imports do React, provavelmente é o editor não enxergando o `node_modules` porque ele está dentro do container. 
+- Caso fique vermelho os imports do frontend, provavelmente é o editor não enxergando o `node_modules` porque ele está dentro do container. 
