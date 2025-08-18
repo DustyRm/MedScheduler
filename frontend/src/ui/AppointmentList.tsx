@@ -33,17 +33,17 @@ function pickDesc(r: Row) {
 }
 
 function pickPatientName(r: Row) {
-  const direct =
-    r.patientName ?? r.pacienteNome ?? r.paciente?.name ?? r.patient?.name ??
-    r.Paciente?.Name ?? r.Patient?.Name;
-  if (direct) return direct;
+  const name =
+    r.patientName ??
+    r.pacienteNome ??
+    r.paciente?.name ??
+    r.patient?.name ??
+    r.Paciente?.Name ??
+    r.Patient?.Name;
 
-  const id =
-    r.patientId ?? r.PacienteId ?? r.PatientId ??
-    r.pacienteId ?? r.Patient?.Id ?? r.Paciente?.Id;
-
-  return id ? `Paciente ${String(id)}` : '-';
+  return (typeof name === 'string' && name.trim().length > 0) ? name.trim() : '-';
 }
+
 
 function pickDoctorName(r: Row, map?: Record<string, User>, override?: string) {
   if (override) return override;

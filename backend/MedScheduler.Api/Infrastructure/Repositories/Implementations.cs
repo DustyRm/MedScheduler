@@ -1,3 +1,4 @@
+using System.Linq;
 using MedScheduler.Api.Domain.Entities;
 using MedScheduler.Api.Domain.Enums;
 using MedScheduler.Api.Infrastructure.Data;
@@ -41,9 +42,11 @@ public class AppointmentRepository(AppDbContext db) : IAppointmentRepository
     public async Task<List<Appointment>> GetByDoctorAndDateAsync(Guid doctorId, DateTime date)
     {
         var start = date.Date;
-        var end = start.AddDays(1);
+        var end   = start.AddDays(1);
+
         return await db.Appointments
             .AsNoTracking()
+            .Include(a => a.Patient)
             .Where(a => a.DoctorId == doctorId && a.DateTime >= start && a.DateTime < end)
             .OrderBy(a => a.DateTime)
             .ToListAsync();

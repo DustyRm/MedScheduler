@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Linq;
 using MedScheduler.Api.Application.DTOs;
 using MedScheduler.Api.Domain.Enums;
 using MedScheduler.Api.Infrastructure.Repositories;
@@ -15,11 +16,23 @@ public class MedicoAgendamentosController(IAppointmentRepository appts) : Contro
     private Guid GetUserId() => Guid.Parse(User.FindFirst("sub")!.Value);
 
     [HttpGet]
-    public async Task<ActionResult<List<AppointmentResponse>>> GetByDate([FromQuery] DateTime data)
+    public async Task<ActionResult<List<AppointmentWithPatientNameResponse>>> GetByDate([FromQuery] DateTime data)
     {
         var doctorId = GetUserId();
         var target = data == default ? DateTime.UtcNow : data.ToUniversalTime();
+
         var list = await appts.GetByDoctorAndDateAsync(doctorId, target);
-        return Ok(list.Select(a => new AppointmentResponse(a.Id, a.PatientId, a.DoctorId, a.DateTime, a.Symptoms, a.RecommendedSpecialty)).ToList());
+
+        var result = list.Select(a => new AppointmentWithPatientNameResponse(
+            a.Id,
+            a.PatientId,
+            a.DoctorId,
+            a.DateTime,
+            a.Symptoms,
+            a.RecommendedSpecialty,
+            a.Patient?.Name ?? string.Empty
+        )).ToList();
+
+        return Ok(result);
     }
 }

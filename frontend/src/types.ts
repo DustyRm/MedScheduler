@@ -10,6 +10,12 @@ export interface User {
   role: UserRole;
 }
 
+export interface UserSlim {
+  id?: string;
+  name?: string; 
+  nome?: string; 
+}
+
 export interface AuthResponse {
   token: string;
   user: User;
@@ -22,8 +28,6 @@ export interface AuthResponse {
  */
 export interface Appointment {
   id?: string;
-
-  // principais
   date?: string;        // ISO (YYYY-MM-DD)
   time?: string;        // HH:mm
   description?: string;

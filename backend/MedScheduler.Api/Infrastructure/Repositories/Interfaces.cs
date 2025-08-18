@@ -1,5 +1,5 @@
 using MedScheduler.Api.Domain.Entities;
-using MedScheduler.Api.Domain.Enums; 
+using MedScheduler.Api.Domain.Enums;
 
 namespace MedScheduler.Api.Infrastructure.Repositories;
 
@@ -16,6 +16,8 @@ public interface IAppointmentRepository
 {
     Task AddAsync(Appointment appt);
     Task<List<Appointment>> GetByPatientAsync(Guid patientId);
+
     Task<List<Appointment>> GetByDoctorAndDateAsync(Guid doctorId, DateTime date);
+
     Task SaveAsync();
 }
