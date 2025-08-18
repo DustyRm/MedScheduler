@@ -81,3 +81,8 @@ input[type="time"].input { min-width: 210px; }
   background: #1f2937;
   font-size: 12px;
 }
+
+
+@keyframes pulse { 0%{opacity:.6} 50%{opacity:1} 100%{opacity:.6} }
+.skeleton-row { height: 48px; border-radius: 10px; background: #1f2937; animation: pulse 1.2s ease-in-out infinite; }
+.visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); border:0; }

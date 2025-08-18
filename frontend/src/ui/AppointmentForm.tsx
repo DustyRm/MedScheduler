@@ -1,110 +1,103 @@
+'use client';
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '@/lib/api';
 import type { User } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { toast } from 'sonner';
 
-export function AppointmentForm({
-  token,
-  onCreated,
-}: {
-  token: string;
-  onCreated?: () => void;
-}) {
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [symptoms, setSymptoms] = useState('');
-  const [doctorId, setDoctorId] = useState('');
-  const [description, setDescription] = useState('');
+const schema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
+  time: z.string().regex(/^\d{2}:\d{2}$/, "Hora inválida"),
+  symptoms: z.string().min(3, "Descreva os sintomas"),
+  description: z.string().optional(),
+  doctorId: z.string().min(1, "Selecione um médico"),
+});
 
+type FormData = z.infer<typeof schema>;
+
+export function AppointmentForm({ token, onCreated }: { token: string; onCreated?: () => void; }) {
   const [doctors, setDoctors] = useState<User[]>([]);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { date: "", time: "", symptoms: "", description: "", doctorId: "" },
+  });
 
   useEffect(() => {
     let alive = true;
     setLoadingDoctors(true);
-    setError(null);
-    api
-      .listDoctors(token)
-      .then((list) => { if (alive) setDoctors(list); })
-      .catch((e: any) => { if (alive) setError(e?.message || 'Erro ao listar médicos'); })
+    api.listDoctors(token)
+      .then(list => { if (alive) setDoctors(list); })
+      .catch(() => {})
       .finally(() => { if (alive) setLoadingDoctors(false); });
     return () => { alive = false; };
   }, [token]);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null); setOk(null);
-
-    if (!date || !time) return setError('Informe data e hora.');
-    if (!symptoms.trim()) return setError('Informe os sintomas.');
-    if (!doctorId.trim()) return setError('Selecione um médico.');
-
-    setLoading(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      await api.createAppointment(token, { date, time, symptoms, doctorId, description });
-      setOk('Agendamento criado com sucesso!');
-      setDate(''); setTime(''); setSymptoms(''); setDoctorId(''); setDescription('');
+      await api.createAppointment(token, {
+        date: data.date,
+        time: data.time,
+        symptoms: data.symptoms,
+        description: data.description || "",
+        doctorId: data.doctorId,
+      });
+      toast.success("Agendamento criado com sucesso!");
+      reset();
       onCreated?.();
     } catch (e: any) {
-      setError(String(e?.message || 'Erro ao criar agendamento'));
-    } finally {
-      setLoading(false);
+      toast.error(e?.message || "Erro ao criar agendamento");
     }
-  }
+  };
 
   return (
-    <form onSubmit={onSubmit} className="row" style={{ flexDirection: 'column', gap: 12 }}>
-      <div className="row">
-        <input className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-      </div>
+    <Card>
+      <form onSubmit={handleSubmit(onSubmit)} aria-label="Formulário de agendamento">
+        <div className="row" style={{marginBottom: 12}}>
+          <div>
+            <Label htmlFor="date">Data</Label>
+            <Input id="date" type="date" aria-label="Data do agendamento" {...register("date")} />
+            {errors.date && <p style={{ color: 'salmon', fontSize: 12 }}>{errors.date.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="time">Hora</Label>
+            <Input id="time" type="time" aria-label="Hora do agendamento" {...register("time")} />
+            {errors.time && <p style={{ color: 'salmon', fontSize: 12 }}>{errors.time.message}</p>}
+          </div>
+        </div>
 
-      <input
-        className="input"
-        placeholder="Sintomas (obrigatório)"
-        value={symptoms}
-        onChange={(e) => setSymptoms(e.target.value)}
-      />
+        <div style={{marginBottom: 12}}>
+          <Label htmlFor="symptoms">Sintomas</Label>
+          <Input id="symptoms" placeholder="Descreva os sintomas" aria-label="Sintomas" {...register("symptoms")} />
+          {errors.symptoms && <p style={{ color: 'salmon', fontSize: 12 }}>{errors.symptoms.message}</p>}
+        </div>
 
-      {/* SELECT de médicos */}
-      {loadingDoctors ? (
-        <div style={{ opacity: 0.8 }}>Carregando médicos...</div>
-      ) : doctors.length === 0 ? (
-        <div style={{ opacity: 0.8 }}>Nenhum médico encontrado.</div>
-      ) : (
-        <select
-          className="input"
-          value={doctorId}
-          onChange={(e) => setDoctorId(e.target.value)}
-        >
-          <option value="">Selecione o médico</option>
-          {doctors.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name || '(sem nome)'} — {d.email}
-            </option>
-          ))}
-        </select>
-      )}
+        <div style={{marginBottom: 12}}>
+          <Label htmlFor="description">Descrição (opcional)</Label>
+          <Input id="description" placeholder="Detalhes adicionais" aria-label="Descrição do agendamento" {...register("description")} />
+        </div>
 
-      <input
-        className="input"
-        placeholder="Descrição (opcional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+        <div style={{marginBottom: 16}}>
+          <Label htmlFor="doctorId">Médico</Label>
+          <Select id="doctorId" aria-label="Médico" disabled={loadingDoctors} {...register("doctorId")}>
+            <option value="">{loadingDoctors ? "Carregando..." : "Selecione um médico"}</option>
+            {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </Select>
+          {errors.doctorId && <p style={{ color: 'salmon', fontSize: 12 }}>{errors.doctorId.message}</p>}
+        </div>
 
-      <button
-        className="button"
-        disabled={loading || loadingDoctors || !date || !time || !symptoms.trim() || !doctorId.trim()}
-      >
-        {loading ? 'Criando...' : 'Criar agendamento'}
-      </button>
-
-      {ok && <p style={{ color: '#7bd389' }}>{ok}</p>}
-      {error && <p style={{ color: 'salmon' }}>{error}</p>}
-    </form>
+        <Button type="submit" disabled={isSubmitting || loadingDoctors} aria-label="Criar agendamento">
+          {isSubmitting ? "Criando..." : "Criar agendamento"}
+        </Button>
+      </form>
+    </Card>
   );
 }
